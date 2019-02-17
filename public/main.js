@@ -12,6 +12,8 @@
   };
   var drawing = false;
 
+  var drawings = [];
+
   canvas.addEventListener('mousedown', onMouseDown, false);
   canvas.addEventListener('mouseup', onMouseUp, false);
   canvas.addEventListener('mouseout', onMouseUp, false);
@@ -21,6 +23,7 @@
     colors[i].addEventListener('click', onColorUpdate, false);
   }
 
+  socket.on('init', onInit);
   socket.on('paint', onDrawingEvent);
 
   window.addEventListener('resize', onResize, false);
@@ -40,13 +43,15 @@
     var w = canvas.width;
     var h = canvas.height;
 
-    socket.emit('paint', {
+    var paintObject = {
       x0: x0 / w,
       y0: y0 / h,
       x1: x1 / w,
       y1: y1 / h,
       color: color
-    });
+    };
+    socket.emit('paint', paintObject);
+    drawings.push(paintObject);
   }
 
   function onMouseDown(e){
@@ -85,16 +90,36 @@
     };
   }
 
-  function onDrawingEvent(data){
+  function onInit(data) {
+    drawings = [].concat(data);
+    redraw();
+  }
+
+  function onDrawingEvent(data) {
     var w = canvas.width;
     var h = canvas.height;
     drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color);
+  }
+
+  function onClear() {
+    drawings = [];
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function redraw() {
+    var w = canvas.width;
+    var h = canvas.height;
+    for (i = 0; i < drawings.length; i++) {
+      drawLine(drawings[i].x0 * w, drawings[i].y0 * h, drawings[i].x1 * w, drawings[i].y1 * h, drawings[i].color);
+    }
   }
 
   // make the canvas fill its parent
   function onResize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    redraw();
   }
 
 })();

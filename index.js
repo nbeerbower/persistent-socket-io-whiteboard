@@ -12,9 +12,9 @@ mongo.connect('mongodb://localhost:27017/paint', (error, db) => {
 
 	function onConnection(socket) {
 		console.log('client connected');
-		db.collection('paint').find().sort({timestamp:1}).forEach((data, error) => {
-			socket.emit('paint', data);
-			if (error) console.log(error);
+		db.collection('paint').find().sort({timestamp:1}).toArray((error, result) => {
+			socket.emit('init', result);
+			if (error) console.error(error);
 		});
 
 		socket.on('paint', (data) => {
