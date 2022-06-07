@@ -5,8 +5,9 @@ const io = require('socket.io')(http);
 const port = process.env.PORT || 3000;
 const mongo = require('mongodb').MongoClient;
 
-mongo.connect('mongodb://localhost:27017/paint', (error, db) => {
+mongo.connect('mongodb://localhost:27017/paint', (error, client) => {
 	if (error) throw error;
+	const db = client.db('paint');
 	console.log('Connected to DB');
 	app.use(express.static(__dirname + '/public'));
 
@@ -19,7 +20,7 @@ mongo.connect('mongodb://localhost:27017/paint', (error, db) => {
 
 		socket.on('paint', (data) => {
 			data.timestamp = new Date();
-			db.collection('paint').save(data, (error, result) => {
+			db.collection('paint').insertOne(data, (error) => {
 				if (error) console.log(error);
 			});
 			socket.broadcast.emit('paint', data);
